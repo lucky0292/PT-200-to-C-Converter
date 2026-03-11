@@ -5,97 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PT-200 Universal Converter</title>
     <style>
-        :root {
-            --primary-blue: #1a73e8;
-            --dark-grey: #202124;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
-            background-color: #f1f3f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .app-card {
-            background: white;
-            width: 100%;
-            max-width: 400px; /* Desktop width limit */
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        h2 { color: var(--primary-blue); margin-top: 0; }
-        .input-area { margin: 25px 0; }
-        label { display: block; margin-bottom: 10px; font-weight: 600; }
-        input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #dfe1e5;
-            border-radius: 10px;
-            font-size: 1.2rem;
-            box-sizing: border-box;
-            outline: none;
-        }
+        :root { --primary-blue: #1a73e8; --dark-grey: #202124; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f1f3f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .app-card { background: white; width: 100%; max-width: 400px; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        h2 { color: var(--primary-blue); margin-bottom: 25px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark-grey); }
+        input { width: 100%; padding: 15px; border: 2px solid #dfe1e5; border-radius: 10px; font-size: 1.1rem; box-sizing: border-box; outline: none; transition: border-color 0.3s; }
         input:focus { border-color: var(--primary-blue); }
-        .result-display {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid #e8eaed;
-        }
-        #temp-out { font-size: 3rem; font-weight: bold; color: var(--dark-grey); }
-        .unit { font-size: 1.1rem; color: #70757a; }
-
-        /* Media Query: Adjusts for very small phones */
-        @media (max-width: 350px) {
-            .app-card { padding: 1rem; }
-            #temp-out { font-size: 2.2rem; }
-        }
+        .divider { margin: 20px 0; border-bottom: 1px solid #eee; position: relative; }
     </style>
 </head>
 <body>
 
 <div class="app-card">
-    <h2>PT-200 (Ω to °C) Converter</h2>
-    <div class="input-area">
+    <h2>PT-200 Converter</h2>
+    
+    <div class="input-group">
         <label>Resistance (Ohms Ω)</label>
-        <input type="number" id="resInput" placeholder="Enter Ω..." oninput="calculate()">
+        <input type="number" id="resInput" placeholder="Enter Ω..." oninput="calcFromRes()">
     </div>
-    <div class="result-display">
-        <div id="temp-out">--</div>
-        <div class="unit">Celsius (°C)</div>
+
+    <div class="divider"></div>
+
+    <div class="input-group">
+        <label>Temperature (°C)</label>
+        <input type="number" id="tempInput" placeholder="Enter °C..." oninput="calcFromTemp()">
     </div>
+
+    <p style="font-size: 0.8rem; color: #70757a; margin-top: 20px;">
+        Optimized for Sensata PT-200 Sensor
+    </p>
 </div>
 
 <script>
-    function calculate() {
-        const Rs = parseFloat(document.getElementById('resInput').value);
-        const display = document.getElementById('temp-out');
-        
-        if (isNaN(Rs) || Rs < 0) {
-            display.innerText = "--";
-            return;
-        }
+    // Constants from Datasheet
+    const RI = 0.5; 
+    const RO = 200.0;
+    const alpha = 3.8285e-3;
+    const beta = -5.85e-7;
 
-        // Data from your Sensata Datasheet
-        const RI = 0.5; 
-        const RO = 200.0;
-        const alpha = 3.8285e-3;
-        const beta = -5.85e-7;
+    // Convert Resistance to Temperature
+    function calcFromRes() {
+        const rsInput = document.getElementById('resInput');
+        const tempInput = document.getElementById('tempInput');
+        const Rs = parseFloat(rsInput.value);
+        
+        if (isNaN(Rs)) { tempInput.value = ""; return; }
 
         const term = 1 - (Rs - RI) / RO;
         const discriminant = Math.pow(alpha, 2) - (4 * beta * term);
         
-        if (discriminant < 0) {
-            display.innerText = "Err";
-        } else {
+        if (discriminant >= 0) {
             const temp = (-alpha + Math.sqrt(discriminant)) / (2 * beta);
-            display.innerText = temp.toFixed(1);
+            tempInput.value = temp.toFixed(1);
+        } else {
+            tempInput.value = "Error";
         }
+    }
+
+    // Convert Temperature to Resistance
+    function calcFromTemp() {
+        const rsInput = document.getElementById('resInput');
+        const tempInput = document.getElementById('tempInput');
+        const T = parseFloat(tempInput.value);
+
+        if (isNaN(T)) { rsInput.value = ""; return; }
+
+        // Formula: Rs = RI + RO * (1 + alpha*T + beta*T^2)
+        const Rs = RI + RO * (1 + (alpha * T) + (beta * Math.pow(T, 2)));
+        rsInput.value = Rs.toFixed(1);
     }
 </script>
 </body>
