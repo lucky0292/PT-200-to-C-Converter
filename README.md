@@ -1,1 +1,2 @@
 # PT-200-to-C-Converter
+PT-200 (Ω to °C) Converter is a high-precision temperature calculation tool designed specifically for the Sensata PT-200 Platinum RTD sensor. This lightweight web application allows engineers and technicians to convert measured electrical resistance into accurate temperature values instantly. Built using the official Callendar-Van Dusen coefficients provided in the technical proposal, it ensures laboratory-grade precision for high-temperature exhaust and industrial sensing applications.
